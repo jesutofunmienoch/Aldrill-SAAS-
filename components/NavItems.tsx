@@ -68,7 +68,7 @@ const NavItems = () => {
           aria-label="Toggle menu"
         >
           <Image
-            src="/icon/maths.svg" // ✅ Your custom icon
+            src="/images/menu.png" // ✅ Your custom icon
             alt="Menu"
             width={30}
             height={30}
