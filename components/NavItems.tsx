@@ -11,8 +11,8 @@ const navItems = [
   { label: 'Home', href: '/' },
   { label: 'Companions', href: '/companions' },
   { label: 'Roadmap', href: '/roadmap' },
-  { label: 'My Journey', href: '/my-journey' },
-  { label: 'Trending-Alerts', href: '/trending' },
+  { label: '📖My Journey', href: '/my-journey' },
+  { label: 'Ask AI🧠 ', href: '/trending' },
 ];
 
 const NavItems = () => {
