@@ -32,9 +32,10 @@ const Trending = () => {
   }, [chatHistories, currentChatId]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (messages.length > 0 && !currentChatId) {
       const title = messages[0].content.split(' ').slice(0, 5).join(' ') + '...';
-      const id = Date.now().toString();
+      const id = String(new Date().getTime());
       const updatedHistories = [...chatHistories, { id, title, messages }];
       setChatHistories(updatedHistories);
       setCurrentChatId(id);
@@ -140,7 +141,7 @@ const Trending = () => {
   }, [messages]);
 
   return (
-    <div className="h-screen w-full flex bg-background text-foreground overflow-hidden">
+    <div className="h-screen w-full flex bg-white text-black overflow-hidden relative">
       <style jsx global>{`
         ::-webkit-scrollbar {
           width: 6px;
@@ -151,19 +152,23 @@ const Trending = () => {
         }
       `}</style>
 
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 sm:hidden cursor-pointer" />
+      )}
+
       {/* Sidebar */}
       <div className={cn(
-        'fixed sm:static top-0 left-0 z-50 sm:z-0 h-full sm:flex w-[260px] border-r bg-white p-4 flex-col gap-4 transition-transform',
+        'fixed sm:static top-0 left-0 z-50 sm:z-0 h-full sm:flex w-[260px] border-r bg-white px-4 pt-4 pb-2 flex-col gap-4 transition-transform',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
       )}>
-        <button className="sm:hidden mb-4 text-black flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
+        <button className="sm:hidden mb-2 text-black flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
           <img src="/images/close.jpeg" alt="Close" className="w-5 h-5" />
           <span>Close</span>
         </button>
         <button onClick={handleNewChat} className="flex items-center gap-2 p-2 bg-primary text-white rounded hover:bg-primary/90">
           <Plus size={16} /> New Chat
         </button>
-        <div className="relative">
+        <div className="relative mt-1 mb-3">
           <Search className="absolute left-2 top-2.5 text-gray-500" size={16} />
           <input type="text" placeholder="Search chats" className="w-full pl-8 pr-2 py-2 border rounded text-sm focus:outline-none" />
         </div>
@@ -181,7 +186,7 @@ const Trending = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1 relative">
+      <div className="flex flex-col flex-1 relative bg-white">
         <div className="p-4 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button className="sm:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -192,7 +197,7 @@ const Trending = () => {
           <img src="/images/chatbot.png" alt="Toggle Sidebar" className="h-12 w-14 rounded-[5px]" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-muted space-y-4" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4 bg-white">
           {justOpened && messages.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center text-center px-4">
               <img src="/images/chatbot.png" alt="Chat AI" className="w-22 h-16 mb-4 object-cover rounded-[9px]" />
