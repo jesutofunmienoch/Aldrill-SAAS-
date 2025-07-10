@@ -17,12 +17,26 @@ const Trending = () => {
   const [chatHistories, setChatHistories] = useState<{ id: string; title: string; messages: Message[] }[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string>('');
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [justOpened, setJustOpened] = useState(true);
+
+  useEffect(() => {
+    const storedChats = localStorage.getItem('chatHistories');
+    const storedCurrentId = localStorage.getItem('currentChatId');
+    if (storedChats) setChatHistories(JSON.parse(storedChats));
+    if (storedCurrentId) setCurrentChatId(storedCurrentId);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('chatHistories', JSON.stringify(chatHistories));
+    localStorage.setItem('currentChatId', currentChatId);
+  }, [chatHistories, currentChatId]);
 
   useEffect(() => {
     if (messages.length > 0 && !currentChatId) {
       const title = messages[0].content.split(' ').slice(0, 5).join(' ') + '...';
       const id = Date.now().toString();
-      setChatHistories((prev) => [...prev, { id, title, messages }]);
+      const updatedHistories = [...chatHistories, { id, title, messages }];
+      setChatHistories(updatedHistories);
       setCurrentChatId(id);
     } else if (currentChatId) {
       setChatHistories((prev) =>
@@ -33,6 +47,7 @@ const Trending = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
+    setJustOpened(false);
 
     const userMessage: Message = { sender: 'user', content: input };
     const newMessages = [...messages, userMessage];
@@ -91,10 +106,12 @@ const Trending = () => {
   const handleNewChat = () => {
     setMessages([]);
     setCurrentChatId('');
+    setJustOpened(true);
   };
 
   const handleDeleteChat = (id: string) => {
-    setChatHistories((prev) => prev.filter((chat) => chat.id !== id));
+    const updated = chatHistories.filter((chat) => chat.id !== id);
+    setChatHistories(updated);
     if (currentChatId === id) {
       handleNewChat();
     }
@@ -114,6 +131,7 @@ const Trending = () => {
     if (chat) {
       setCurrentChatId(chat.id);
       setMessages(chat.messages);
+      setJustOpened(false);
     }
   };
 
@@ -122,41 +140,36 @@ const Trending = () => {
   }, [messages]);
 
   return (
-    <div className="h-screen w-full flex bg-background text-foreground">
+    <div className="h-screen w-full flex bg-background text-foreground overflow-hidden">
+      <style jsx global>{`
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+          background-color: orange;
+          border-radius: 3px;
+        }
+      `}</style>
+
       {/* Sidebar */}
-      <div
-        className={cn(
-          'fixed sm:static top-0 left-0 z-50 sm:z-0 h-full sm:flex w-[260px] border-r bg-white p-4 flex-col gap-4 transition-transform',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
-        )}
-      >
-        <button
-          className="sm:hidden mb-4 text-black flex items-center gap-2"
-          onClick={() => setSidebarOpen(false)}
-        >
-          <img src="/images/menu.png" alt="Close" className="w-5 h-5" />
+      <div className={cn(
+        'fixed sm:static top-0 left-0 z-50 sm:z-0 h-full sm:flex w-[260px] border-r bg-white p-4 flex-col gap-4 transition-transform',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
+      )}>
+        <button className="sm:hidden mb-4 text-black flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
+          <img src="/images/close.jpeg" alt="Close" className="w-5 h-5" />
           <span>Close</span>
         </button>
         <button onClick={handleNewChat} className="flex items-center gap-2 p-2 bg-primary text-white rounded hover:bg-primary/90">
           <Plus size={16} /> New Chat
         </button>
-
         <div className="relative">
           <Search className="absolute left-2 top-2.5 text-gray-500" size={16} />
-          <input
-            type="text"
-            placeholder="Search chats"
-            className="w-full pl-8 pr-2 py-2 border rounded text-sm focus:outline-none"
-          />
+          <input type="text" placeholder="Search chats" className="w-full pl-8 pr-2 py-2 border rounded text-sm focus:outline-none" />
         </div>
-
         <div className="flex-1 overflow-y-auto space-y-2">
           {chatHistories.map((chat) => (
-            <div
-              key={chat.id}
-              className="flex items-center justify-between p-2 bg-muted hover:bg-gray-100 rounded cursor-pointer"
-              onClick={() => handleSelectChat(chat.id)}
-            >
+            <div key={chat.id} className="flex items-center justify-between p-2 bg-muted hover:bg-gray-100 rounded cursor-pointer" onClick={() => handleSelectChat(chat.id)}>
               <span className="text-sm truncate w-40" title={chat.title}>{chat.title}</span>
               <div className="flex items-center gap-1">
                 <Pencil size={14} className="text-gray-500 hover:text-black cursor-pointer" onClick={() => handleRenameChat(chat.id)} />
@@ -168,7 +181,7 @@ const Trending = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 relative">
         <div className="p-4 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button className="sm:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -176,12 +189,12 @@ const Trending = () => {
             </button>
             <h1 className="text-lg font-semibold">Aldrill AI 🚀 Assistant</h1>
           </div>
-          <img src="/images/chatbot.png" alt="Menu" className="h-12 w-14 rounded-[5px]" />
+          <img src="/images/chatbot.png" alt="Toggle Sidebar" className="h-12 w-14 rounded-[5px]" />
         </div>
 
-        <div className="flex-1 overflow-hidden p-4 relative bg-muted">
-          {messages.length === 0 && !loading ? (
-            <div className="absolute top-0 left-0 right-0 bottom-20 flex flex-col items-center justify-center text-center px-4">
+        <div className="flex-1 overflow-y-auto p-4 bg-muted space-y-4" style={{ scrollbarWidth: 'thin' }}>
+          {justOpened && messages.length === 0 && !loading ? (
+            <div className="flex flex-col items-center justify-center text-center px-4">
               <img src="/images/chatbot.png" alt="Chat AI" className="w-22 h-16 mb-4 object-cover rounded-[9px]" />
               <h2 className="text-xl font-semibold">💬 Chat with Aldrill AI</h2>
               <p className="text-muted-foreground mb-6">🚀 An AI Created By ENOCH powerful language model</p>
@@ -198,7 +211,7 @@ const Trending = () => {
               </div>
             </div>
           ) : (
-            <div className="overflow-y-auto h-full pb-24 space-y-4">
+            <>
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -229,33 +242,35 @@ const Trending = () => {
                 </div>
               )}
               <div ref={bottomRef} />
-            </div>
+            </>
           )}
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend();
-          }}
-          className="p-4 border-t flex items-center gap-2 bg-white"
-        >
-          <textarea
-            rows={1}
-            className="flex-1 resize-none border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-            placeholder="💬 Ask me anything..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="p-2 bg-primary rounded-md text-white hover:bg-primary/90"
+        <div className="fixed bottom-0 left-0 right-0 sm:left-[260px] z-10 bg-white p-4 border-t flex items-center gap-2">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+            className="flex-1 flex items-center gap-2"
           >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+            <textarea
+              rows={1}
+              className="flex-1 resize-none border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+              placeholder="💬 Ask me anything..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="p-2 bg-primary rounded-md text-white hover:bg-primary/90"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
