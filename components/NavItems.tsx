@@ -4,15 +4,20 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
-import Image from "next/image";
+import { Loader2, ChevronDown, Menu } from "lucide-react";
 
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'Companions', href: '/companions' },
   { label: 'Roadmap', href: '/roadmap' },
   { label: '📖My Journey', href: '/my-journey' },
-  { label: 'Ask AI🧠 ', href: '/trending' },
+];
+
+const aiDropdownItems = [
+  { label: 'ChatGPT', href: '/ai/chatgpt' },
+  { label: 'Grok AI', href: '/ai/grok' },
+  { label: 'DeepSeek', href: '/ai/deepseek' },
+  { label: 'Gemini', href: '/ai/gemini' },
 ];
 
 const NavItems = () => {
@@ -22,12 +27,14 @@ const NavItems = () => {
   const [loading, setLoading] = useState(false);
   const [targetHref, setTargetHref] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAIDropdownOpen, setIsAIDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (targetHref && pathname === targetHref) {
       setLoading(false);
       setTargetHref(null);
-      setIsMenuOpen(false); // close mobile menu on route change
+      setIsMenuOpen(false);
+      setIsAIDropdownOpen(false);
     }
   }, [pathname, targetHref]);
 
@@ -39,6 +46,7 @@ const NavItems = () => {
       router.push(href);
     } else {
       setIsMenuOpen(false);
+      setIsAIDropdownOpen(false);
     }
   };
 
@@ -51,13 +59,36 @@ const NavItems = () => {
             href={href}
             key={label}
             onClick={(e) => handleClick(e, href)}
-            className={cn(
-              pathname === href && 'text-primary font-semibold'
-            )}
+            className={cn(pathname === href && 'text-primary font-semibold')}
           >
             {label}
           </Link>
         ))}
+
+        {/* Ask AI Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setIsAIDropdownOpen((prev) => !prev)}
+            className="flex items-center gap-1 text-black hover:text-primary transition-all"
+          >
+            Ask AI🧠 <ChevronDown className="w-6 h-4" />
+          </button>
+
+          {isAIDropdownOpen && (
+            <div className="absolute top-full mt-2 bg-white border rounded shadow-lg p-2 z-20">
+              {aiDropdownItems.map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={(e) => handleClick(e, href)}
+                  className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* Mobile Menu Button */}
@@ -67,18 +98,12 @@ const NavItems = () => {
           className="p-2"
           aria-label="Toggle menu"
         >
-          <Image
-            src="/images/menu.png" // ✅ Your custom icon
-            alt="Menu"
-            width={30}
-            height={30}
-          />
+          <Menu className="w-6 h-6 text-black" />
         </button>
 
-        {/* Dropdown menu */}
         {isMenuOpen && (
-          <div className="absolute top-12 right-0 bg-white border border-gray-200 rounded-md shadow-md w-48 p-4 space-y-3 z-50">
-            {navItems.map(({ label, href }) => (
+          <div className="absolute top-12 right-0 bg-white border border-gray-200 rounded-md shadow-md w-56 p-4 space-y-3 z-50">
+            {[...navItems, { label: 'Ask AI🧠', href: '/trending' }].map(({ label, href }) => (
               <Link
                 key={label}
                 href={href}
@@ -91,6 +116,20 @@ const NavItems = () => {
                 {label}
               </Link>
             ))}
+
+            <div className="border-t pt-2">
+              <p className="font-medium text-sm text-gray-700 mb-1">🔍 AI Models</p>
+              {aiDropdownItems.map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={(e) => handleClick(e, href)}
+                  className="block pl-2 text-sm text-gray-600 hover:text-black"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>
