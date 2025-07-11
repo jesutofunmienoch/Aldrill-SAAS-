@@ -227,9 +227,42 @@ const CompanionForm = () => {
             )}
           />
 
-          <Button type="submit" className="w-full cursor-pointer">
-            Build Your Companion
-          </Button>
+          {/* File Upload Field */}
+<div className="space-y-2">
+  <FormLabel>Import File for AI Teaching</FormLabel>
+  <Input
+    type="file"
+    accept=".pdf,.doc,.docx,.txt,image/*"
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      let parsedText = '';
+
+      if (file.type === 'application/pdf') {
+        const { extractTextFromPDF } = await import('@/lib/fileParser.client');
+        parsedText = await extractTextFromPDF(file);
+      } else if (file.name.endsWith('.docx')) {
+        const { extractTextFromDocx } = await import('@/lib/fileParser.client');
+        parsedText = await extractTextFromDocx(file);
+      } else if (file.type.startsWith('image/')) {
+        const { extractTextFromImage } = await import('@/lib/fileParser.client');
+        parsedText = await extractTextFromImage(file);
+      } else if (file.type === 'text/plain') {
+        parsedText = await file.text();
+      }
+
+      // Store for access in the session page
+      localStorage.setItem('parsedContent', parsedText);
+    }}
+  />
+</div>
+
+{/* Submit Button */}
+<Button type="submit" className="w-full cursor-pointer">
+  Build Your Companion
+</Button>
+
         </form>
       </Form>
     </>
