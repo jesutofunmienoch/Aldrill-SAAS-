@@ -1,9 +1,9 @@
 import React from 'react'
 
-const grok = () => {
+const Grok = () => {
   return (
     <div>Grok</div>
   )
 }
 
-export default grok
+export default Grok

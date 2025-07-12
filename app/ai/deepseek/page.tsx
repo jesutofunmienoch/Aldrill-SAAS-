@@ -1,9 +1,9 @@
 import React from 'react'
 
-const deepseeek = () => {
+const Deepseeek = () => {
   return (
     <div>Deepseeek</div>
   )
 }
 
-export default deepseeek
+export default Deepseeek

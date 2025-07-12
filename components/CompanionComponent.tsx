@@ -11,6 +11,14 @@ import soundwaves from '@/constants/soundwaves.json'
 import { addToSessionHistory } from "@/lib/actions/companion.actions";
 import CompanionCard from './CompanionCard';
 import { Pencil } from 'lucide-react';
+import ComponentSidebar from './ComponentSidebar';
+// adjust path if needed
+
+interface Chat {
+  id: string;
+  name: string;
+}
+
 
 import Vapi from '@vapi-ai/web';
 
@@ -62,6 +70,29 @@ useEffect(() => {
   }
 }, []);
 
+const [chats, setChats] = useState<Chat[]>([
+  { id: "1", name: "Intro to AI" },
+  { id: "2", name: "Math Notes" }
+]);
+
+const handleNewChat = () => {
+  const newChat = { id: Date.now().toString(), name: "New Chat" };
+  setChats((prev) => [newChat, ...prev]);
+};
+
+const handleSelectChat = (id: string) => {
+  console.log("Selected Chat:", id);
+};
+
+const handleRenameChat = (id: string, newName: string) => {
+  setChats((prev) =>
+    prev.map((chat) => (chat.id === id ? { ...chat, name: newName } : chat))
+  );
+};
+
+const handleDeleteChat = (id: string) => {
+  setChats((prev) => prev.filter((chat) => chat.id !== id));
+};
 
 
   useEffect(() => {
@@ -393,7 +424,24 @@ if (!hasMounted) return null;
 
 
   return (
-    <section className="flex flex-col h-[70vh] relative">
+  <div className="flex h-screen overflow-hidden">
+    {/* Sidebar */}
+<ComponentSidebar
+  chats={chats}
+  userName={userName}           // <-- make sure you're passing these props
+  userImage={userImage}         // <-- required!
+  onNewChat={handleNewChat}
+  onSelectChat={handleSelectChat}
+  onRenameChat={handleRenameChat}
+  onDeleteChat={handleDeleteChat}
+  onLogout={() => console.log('Logout clicked')} // or your actual logout function
+/>
+
+
+    {/* Main Content */}
+    <div className="flex-1 overflow-y-auto px-6 sm:px-12 no-scrollbar">
+
+        <section className="flex flex-col h-[70vh] relative">
          
       <div className="flex flex-wrap gap-6 pt-6 ">
         <CompanionCard
@@ -513,8 +561,10 @@ if (!hasMounted) return null;
 
 
     </section>
-    
-  );
+    </div>
+  </div>
+);
+
 };
 
 export default CompanionComponent;

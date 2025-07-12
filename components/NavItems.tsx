@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, ChevronDown, Menu } from "lucide-react";
 
@@ -13,7 +13,7 @@ const navItems = [
   { label: '📖My Journey', href: '/my-journey' },
 ];
 
-const aiDropdownItems = [
+const aiItems = [
   { label: 'ChatGPT', href: '/ai/chatgpt' },
   { label: 'Grok AI', href: '/ai/grok' },
   { label: 'DeepSeek', href: '/ai/deepseek' },
@@ -25,62 +25,71 @@ const NavItems = () => {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
-  const [targetHref, setTargetHref] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAIDropdownOpen, setIsAIDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    if (targetHref && pathname === targetHref) {
-      setLoading(false);
-      setTargetHref(null);
-      setIsMenuOpen(false);
-      setIsAIDropdownOpen(false);
-    }
-  }, [pathname, targetHref]);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const aiDropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = async (e: React.MouseEvent, href: string) => {
-    e.preventDefault();
-    if (pathname !== href) {
-      setLoading(true);
-      setTargetHref(href);
-      router.push(href);
-    } else {
-      setIsMenuOpen(false);
-      setIsAIDropdownOpen(false);
-    }
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+      if (aiDropdownRef.current && !aiDropdownRef.current.contains(e.target as Node)) {
+        setIsAIDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setLoading(false);
+    setIsMenuOpen(false);
+    setIsAIDropdownOpen(false);
+  }, [pathname]);
+
+  const handleLinkClick = (href: string) => {
+    setLoading(true);
+    router.push(href);
   };
 
   return (
     <>
-      {/* Desktop Navigation */}
+      {/* DESKTOP / TABLET NAVBAR */}
       <nav className="hidden md:flex items-center gap-6 relative z-10">
         {navItems.map(({ label, href }) => (
           <Link
-            href={href}
             key={label}
-            onClick={(e) => handleClick(e, href)}
-            className={cn(pathname === href && 'text-primary font-semibold')}
+            href={href}
+            onClick={() => handleLinkClick(href)}
+            className={cn(
+              'hover:text-primary transition-all',
+              pathname === href && 'text-primary font-semibold'
+            )}
           >
             {label}
           </Link>
         ))}
 
-        {/* Ask AI Dropdown */}
-        <div className="relative">
+        {/* ASK AI DROPDOWN FOR DESKTOP ONLY */}
+        <div ref={aiDropdownRef} className="relative">
           <button
-            onClick={() => setIsAIDropdownOpen((prev) => !prev)}
+            onClick={() => setIsAIDropdownOpen(prev => !prev)}
             className="flex items-center gap-1 text-black hover:text-primary transition-all"
           >
-            Ask AI🧠 <ChevronDown className="w-6 h-4" />
+            Ask AI🧠 <ChevronDown className="w-5 h-5" />
           </button>
 
           {isAIDropdownOpen && (
-            <div className="absolute top-full mt-2 bg-white border rounded shadow-lg p-2 z-20">
-              {aiDropdownItems.map(({ label, href }) => (
+            <div className="absolute top-full mt-2 bg-white border rounded shadow-lg p-2 z-50 w-48">
+              {aiItems.map(({ label, href }) => (
                 <Link
                   key={label}
                   href={href}
-                  onClick={(e) => handleClick(e, href)}
+                  onClick={() => handleLinkClick(href)}
                   className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                 >
                   {label}
@@ -91,23 +100,27 @@ const NavItems = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu Button */}
+      {/* MOBILE MENU BUTTON */}
       <div className="md:hidden relative z-50">
         <button
-          onClick={() => setIsMenuOpen((prev) => !prev)}
+          onClick={() => setIsMenuOpen(prev => !prev)}
           className="p-2"
           aria-label="Toggle menu"
         >
           <Menu className="w-6 h-6 text-black" />
         </button>
 
+        {/* MOBILE MENU CONTENT */}
         {isMenuOpen && (
-          <div className="absolute top-12 right-0 bg-white border border-gray-200 rounded-md shadow-md w-56 p-4 space-y-3 z-50">
-            {[...navItems, { label: 'Ask AI🧠', href: '/trending' }].map(({ label, href }) => (
+          <div
+            ref={menuRef}
+            className="absolute top-12 right-0 bg-white border border-gray-200 rounded-md shadow-md w-56 p-4 space-y-3 z-50"
+          >
+            {navItems.map(({ label, href }) => (
               <Link
                 key={label}
                 href={href}
-                onClick={(e) => handleClick(e, href)}
+                onClick={() => handleLinkClick(href)}
                 className={cn(
                   "block text-base hover:text-blue-600",
                   pathname === href && "text-blue-600 font-bold"
@@ -117,14 +130,18 @@ const NavItems = () => {
               </Link>
             ))}
 
-            <div className="border-t pt-2">
-              <p className="font-medium text-sm text-gray-700 mb-1">🔍 AI Models</p>
-              {aiDropdownItems.map(({ label, href }) => (
+            {/* AI ITEMS DIRECTLY IN MOBILE NAVBAR (NO DROPDOWN) */}
+            <div className="border-t pt-3">
+              <span className="text-xs text-gray-500 font-semibold mb-1 block">ALL IN ONE AI TOOLS</span>
+              {aiItems.map(({ label, href }) => (
                 <Link
                   key={label}
                   href={href}
-                  onClick={(e) => handleClick(e, href)}
-                  className="block pl-2 text-sm text-gray-600 hover:text-black"
+                  onClick={() => handleLinkClick(href)}
+                  className={cn(
+                    "block text-sm hover:text-black",
+                    pathname === href && "text-primary font-semibold"
+                  )}
                 >
                   {label}
                 </Link>
@@ -134,7 +151,7 @@ const NavItems = () => {
         )}
       </div>
 
-      {/* Global loading overlay */}
+      {/* LOADING SCREEN */}
       {loading && (
         <div className="fixed inset-0 bg-white/80 dark:bg-black/80 flex items-center justify-center z-[9999]">
           <div className="flex flex-col items-center gap-4">

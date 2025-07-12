@@ -123,6 +123,29 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Optional: rounded shadow sidebar */
+.sidebar-rounded {
+  @apply rounded-tr-2xl rounded-br-2xl shadow-lg;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* globals.css */
+.scrollbar-hide {
+  scrollbar-width: none;         /* Firefox */
+  -ms-overflow-style: none;      /* Internet Explorer 10+ */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;                 /* Chrome, Safari, Opera */
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

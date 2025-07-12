@@ -36,7 +36,7 @@ const Sidebar = ({
         onClick={onNewChat}
         className="flex items-center gap-2 text-sm bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90"
       >
-        <Plus className="w-4 h-4" /> New Chat
+        <Plus className="w-4 h-4" /> New Chhhat
       </button>
 
       <div className="relative mt-4">

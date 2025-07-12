@@ -1,9 +1,9 @@
 import React from 'react'
 
-const gemini = () => {
+const Gemini = () => {
   return (
     <div>Gemini</div>
   )
 }
 
-export default gemini
+export default Gemini
