@@ -10,10 +10,13 @@ interface CompanionSessionPageProps {
 const CompanionSession = async ({ params }: CompanionSessionPageProps) => {
   const { id } = params;
 
+  // Get companion data from your DB or source
   const companion = await getCompanion(id);
+
+  // Try to get current user (may be null if public user)
   const user = await currentUser();
 
-  if (!user) redirect("/sign-in");
+  // Redirect only if the companion was not found
   if (!companion?.name) redirect("/companions");
 
   return (
@@ -21,8 +24,8 @@ const CompanionSession = async ({ params }: CompanionSessionPageProps) => {
       <CompanionComponent
         {...companion}
         companionId={id}
-        userName={user.firstName!}
-        userImage={user.imageUrl!}
+        userName={user?.firstName || "friend"}
+        userImage={user?.imageUrl || "/images/default-avatar.png"}
       />
     </main>
   );

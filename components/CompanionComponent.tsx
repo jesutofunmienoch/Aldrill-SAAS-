@@ -320,16 +320,18 @@ const onSpeechEnd = () => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 const inputRef = useRef<HTMLInputElement>(null);
 
-
-   const handleUserInterrupt = async (question: string) => {
+const handleUserInterrupt = async (question: string) => {
   if (!voice || !style) {
     alert("Missing assistant voice or style configuration.");
     return;
   }
 
-  const assistantConfig = configureAssistant(voice, style, subject, topic);
- assistantConfig.firstMessage = `Hello ${userName}! Welcome to this teaching lesson on "${name}". Would you like me to *read through the note* or *ask you questions* based on it?`;
+  const safeName = userName || "friend"; // fallback
 
+  const assistantConfig = configureAssistant(voice, style, subject, topic);
+  const firstSpokenMessage = `Hello ${safeName}! Welcome to this teaching lesson on "${name}". Would you like me to *read through the note* or *ask you questions* based on it?`;
+
+  assistantConfig.firstMessage = firstSpokenMessage;
 
   if (assistantConfig.model?.messages) {
     assistantConfig.model.messages.push({
@@ -343,9 +345,17 @@ const inputRef = useRef<HTMLInputElement>(null);
     { role: "user", content: question },
   ]);
 
-  vapiRef.current?.start(assistantConfig);
+  await vapiRef.current?.start(assistantConfig);
   setCallStatus(CallStatus.ACTIVE);
+
+  setTimeout(() => {
+    vapiRef.current?.send({
+      type: "say",
+      message: firstSpokenMessage,
+    });
+  }, 100);
 };
+
 
 const handleCall = async () => {
   if (!parsedContent?.trim()) {
@@ -382,9 +392,12 @@ const handleCall = async () => {
       return;
     }
 
+    const safeName = userName || "friend"; // fallback
     const assistantConfig = configureAssistant(voice, style, subject, topic);
 
-    const firstSpokenMessage = `Hello ${userName}! Welcome to this teaching lesson on "${name}". Would you like me to *read the note* or *ask you questions* based on it?`;
+    const firstSpokenMessage = `Hello ${safeName}! Welcome to this teaching lesson on "${name}". Would you like me to *read the note* or *ask you questions* based on it?`;
+
+    assistantConfig.firstMessage = firstSpokenMessage;
 
     if (assistantConfig.model?.messages) {
       assistantConfig.model.messages.push({
@@ -407,19 +420,15 @@ const handleCall = async () => {
       { role: 'assistant', content: `Hello, I have scanned the document. Let's get started.` },
     ]);
 
-    // Start the voice session without speaking the first message yet
     await vapiRef.current?.start(assistantConfig, assistantOverrides);
     setCallStatus(CallStatus.ACTIVE);
 
-    // Now speak the welcome message with interruption enabled
- setTimeout(() => {
-  vapiRef.current?.send({
-    type: "say",
-    message: firstSpokenMessage
-  });
-}, 100);
-
-
+    setTimeout(() => {
+      vapiRef.current?.send({
+        type: "say",
+        message: firstSpokenMessage,
+      });
+    }, 100);
 
   } catch (error) {
     console.error("[handleCall error]", error);
@@ -427,6 +436,7 @@ const handleCall = async () => {
     setCallStatus(CallStatus.FINISHED);
   }
 };
+
 
 
 
