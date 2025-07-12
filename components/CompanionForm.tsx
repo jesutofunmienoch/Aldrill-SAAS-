@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { subjects } from "@/constants";
 import { createCompanion } from "@/lib/actions/companion.actions";
 
+// ✅ Add file field as required
 const formSchema = z.object({
   name: z.string().min(1, { message: "Companion is required." }),
   subject: z.string().min(1, { message: "Subject is required." }),
@@ -35,6 +36,7 @@ const formSchema = z.object({
   voice: z.string().min(1, { message: "Voice is required." }),
   style: z.string().min(1, { message: "Style is required." }),
   duration: z.coerce.number().min(1, { message: "Duration is required." }),
+  file: z.instanceof(File, { message: "File is required." }),
 });
 
 const CompanionForm = () => {
@@ -55,6 +57,7 @@ const CompanionForm = () => {
       voice: "",
       style: "",
       duration: 15,
+      file: undefined, // ✅ file included in default values
     },
   });
 
@@ -72,7 +75,7 @@ const CompanionForm = () => {
 
   return (
     <>
-      {/* Loading Spinner Overlay - only on client to avoid hydration issues */}
+      {/* Loading Spinner */}
       {isClient && loading && (
         <div className="fixed inset-0 z-50 bg-white/80 flex items-center justify-center">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -81,7 +84,7 @@ const CompanionForm = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Name */}
+          {/* Companion Name */}
           <FormField
             control={form.control}
             name="name"
@@ -227,42 +230,51 @@ const CompanionForm = () => {
             )}
           />
 
-          {/* File Upload Field */}
-<div className="space-y-2">
-  <FormLabel>Import File for AI Teaching</FormLabel>
-  <Input
-    type="file"
-    accept=".pdf,.doc,.docx,.txt,image/*"
-    onChange={async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+          {/* File Upload */}
+          <FormField
+            control={form.control}
+            name="file"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Import File for AI Teaching</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt,image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
 
-      let parsedText = '';
+                      form.setValue("file", file); // ✅ register file in form
 
-      if (file.type === 'application/pdf') {
-        const { extractTextFromPDF } = await import('@/lib/fileParser.client');
-        parsedText = await extractTextFromPDF(file);
-      } else if (file.name.endsWith('.docx')) {
-        const { extractTextFromDocx } = await import('@/lib/fileParser.client');
-        parsedText = await extractTextFromDocx(file);
-      } else if (file.type.startsWith('image/')) {
-        const { extractTextFromImage } = await import('@/lib/fileParser.client');
-        parsedText = await extractTextFromImage(file);
-      } else if (file.type === 'text/plain') {
-        parsedText = await file.text();
-      }
+                      let parsedText = "";
 
-      // Store for access in the session page
-      localStorage.setItem('parsedContent', parsedText);
-    }}
-  />
-</div>
+                      if (file.type === "application/pdf") {
+                        const { extractTextFromPDF } = await import("@/lib/fileParser.client");
+                        parsedText = await extractTextFromPDF(file);
+                      } else if (file.name.endsWith(".docx")) {
+                        const { extractTextFromDocx } = await import("@/lib/fileParser.client");
+                        parsedText = await extractTextFromDocx(file);
+                      } else if (file.type.startsWith("image/")) {
+                        const { extractTextFromImage } = await import("@/lib/fileParser.client");
+                        parsedText = await extractTextFromImage(file);
+                      } else if (file.type === "text/plain") {
+                        parsedText = await file.text();
+                      }
 
-{/* Submit Button */}
-<Button type="submit" className="w-full cursor-pointer">
-  Build Your Companion
-</Button>
+                      localStorage.setItem("parsedContent", parsedText);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
+          {/* Submit Button */}
+          <Button type="submit" className="w-full cursor-pointer">
+            Build Your Companion
+          </Button>
         </form>
       </Form>
     </>
