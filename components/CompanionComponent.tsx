@@ -66,7 +66,7 @@ const vapiRef = useRef<Vapi | null>(null);
 
 useEffect(() => {
   if (!vapiRef.current) {
-    vapiRef.current = new Vapi("3e6fb716-60c1-492f-9697-b74d9ced0686"); // <-- your actual token
+    vapiRef.current = vapi;
   }
 }, []);
 
@@ -235,13 +235,27 @@ const onSpeechEnd = () => {
 
 
 
-    const onError = async (error: any) => {
-    console.log("Vapi Error:", error);
-    if (error?.error instanceof Response) {
-      const text = await error.error.text();
-      console.error("Vapi Response Error Body:", text);
-    }
-  };
+   const onError = async (error: any) => {
+  console.log("Vapi Error:", error);
+
+  // ✅ Handle wallet balance error (HTTP 400 with specific message)
+  if (
+    error?.response?.status === 400 &&
+    error?.response?.data?.message?.includes("Wallet Balance")
+  ) {
+    console.warn("Vapi wallet balance is too low. Upgrade your plan to continue using voice features.");
+    alert("❌ Your Vapi wallet balance is too low. Please top up or upgrade your plan.");
+    setCallStatus(CallStatus.FINISHED); // Optional: end session
+    return;
+  }
+
+  // ✅ Fallback error logging for other cases
+  if (error?.error instanceof Response) {
+    const text = await error.error.text();
+    console.error("Vapi Response Error Body:", text);
+  }
+};
+
 
   if (vapiRef.current) {
     vapiRef.current.on('call-start', onCallStart);
